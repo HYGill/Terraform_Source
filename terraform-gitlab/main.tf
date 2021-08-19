@@ -74,7 +74,7 @@ resource "aws_security_group_rule" "public_gitlab_ssh" {
   from_port         = 22
   to_port           = 22
   protocol          = "TCP"
-  cidr_blocks       = ["210.92.173.102/32"]
+  cidr_blocks       = ["내 PC IP"]
   security_group_id = "${aws_security_group.public_gitlab_group.id}"
 }
  
@@ -92,7 +92,7 @@ resource "aws_security_group_rule" "public_gitlab" {
   from_port         = 8899
   to_port           = 8899
   protocol          = "TCP"
-  cidr_blocks       = ["210.92.173.102/32"]
+  cidr_blocks       = ["내 PC IP"]
   security_group_id = "${aws_security_group.public_gitlab_group.id}"
 }
 
