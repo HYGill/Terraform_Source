@@ -1,0 +1,106 @@
+AWSTemplateFormatVersion: 2010-09-09
+Parameters:
+  VPCCIDR:
+    Type: String
+    Description: IP Address range
+    Default: 10.0.0.0/24
+    ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
+  KeyName:
+    Description: Name of an existing EC2 KeyPair to enable SSH access to the instance
+    Type: 'AWS::EC2::KeyPair::KeyName'
+    ConstraintDescription: must be the name of an existing EC2 KeyPair.
+
+Resources:
+  VPC:
+    Type: 'AWS::EC2::VPC'
+    Properties:
+      CidrBlock: !Ref VPCCIDR
+      Tags:
+        - Key: Name
+          Value: cloudFormation_vpc
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: cloudFormation_igw
+
+  InternetGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId: !Ref InternetGateway
+      VpcId: !Ref VPC
+
+  PublicSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: ap-northeast-2a
+      CidrBlock: 10.0.0.0/25
+      Tags:
+        - Key: Name
+          Value: cloudFormation_public_subnet
+    
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: cloudFormation Public Routes
+
+  DefaultPublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: InternetGatewayAttachment
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  PublicSubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnet
+
+  PrivateSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: ap-northeast-2a
+      CidrBlock: 10.0.0.128/26
+      Tags:
+        - Key: Name
+          Value: cloudFormation_private_subnet
+
+  PublicInstanceSecurityGroup: 
+    Type : AWS::EC2::SecurityGroup
+    Properties: 
+      VpcId: !Ref VPC
+      GroupDescription : Enable HTTP access via port 80
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: '80'
+          ToPort: '80'
+          CidrIp: 0.0.0.0/0
+
+  PublicInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId : ami-0e1e385b0a934254a
+      InstanceType   : t2.micro
+      KeyName        : !Ref KeyName
+      NetworkInterfaces:
+        - GroupSet:
+            - PublicInstanceSecurityGroup
+          SubnetId: !Ref PublicSubnet
+          AssociatePublicIpAddress : true
+          DeviceIndex              : 0
+      
+    
+
+Outputs:
+  VPCId:
+    Description: VPCId of the newly created VPC
+    Value: !Ref VPC
