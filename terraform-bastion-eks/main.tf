@@ -188,7 +188,7 @@ module "eks" {
     vpc_id      = "${aws_vpc.terraform_vpc.id}"
     subnets     = ["${aws_subnet.terraform_private_subnet.id}", "${aws_subnet.terraform_private_subnet2.id}"]
     cluster_version = "1.20"
-    cluster_endpoint_public_access_cidrs = ["bastion IP"]
+    cluster_endpoint_public_access_cidrs = ["bastion IP", "NatGateway IP"]
  
   
     node_groups = {
